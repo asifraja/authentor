@@ -9,18 +9,18 @@ using System.Threading.Tasks;
 
 namespace Authentor.Controllers
 {
+    // Checkout https://www.youtube.com/watch?v=n-g9O0dOV9A&t=21s by Raw Coding. 
     public class HomeController : Controller
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
-        private readonly IAuthorizationService _authorizationService;
 
-        public HomeController(IAuthorizationService authorizationService, UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager)
+        public HomeController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager)
         {
-            _authorizationService = authorizationService;
             _userManager = userManager;
             _signInManager = signInManager;
         }
+
         public IActionResult Index()
         {
             return View();
@@ -50,9 +50,14 @@ namespace Authentor.Controllers
             if(user!=null)
             {
                 var signInResult = await _signInManager.PasswordSignInAsync(user, password, false, false);
+                if (signInResult.Succeeded)
+                {
+                    User.Claims.Append(new System.Security.Claims.Claim("Claim.DoB", "12/12/2019"));
+                }
             }
             return RedirectToAction("Index");
         }
+        
         [HttpPost]
         public async Task<IActionResult> Register(string username, string password)
         {
@@ -67,40 +72,45 @@ namespace Authentor.Controllers
             if(result.Succeeded)
             {
                 var signInResult = await _signInManager.PasswordSignInAsync(user, password, false, false);
+                if (signInResult.Succeeded)
+                {
+                    User.Claims.Append(new System.Security.Claims.Claim("Claim.DoB", "12/12/2019"));
+                }
             }
-            return RedirectToAction("Index");
+            return RedirectToAction("index");
         }
 
+        [Authorize]
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
             return RedirectToAction("Index");
         }
 
-        // Example of using authorization Service logically within the action or method
-        public async Task<IActionResult> DoStuffWithContructorIoC()
-        {
-            //await _authorizationService.AuthorizeAsync(HttpContext.User, "Claim.DoB");
-            // or
-            var result = await _authorizationService.AuthorizeAsync(User, "Claim.DoB");
-            if(result.Succeeded)
-            {
-                return View("Secret");
-            }
-            return View("Index");
-        }
+        //// Example of using authorization Service logically within the action or method
+        //public async Task<IActionResult> DoStuffWithContructorIoC()
+        //{
+        //    //await _authorizationService.AuthorizeAsync(HttpContext.User, "Claim.DoB");
+        //    // or
+        //    var result = await _authorizationService.AuthorizeAsync(User, "Claim.DoB");
+        //    if(result.Succeeded)
+        //    {
+        //        return View("Secret");
+        //    }
+        //    return View("Index");
+        //}
         
-        // Example of using authorization Service logically within the action or method
-        public async Task<IActionResult> DoStuffWithMethodIoC([FromServices] IAuthorizationService authorizationService)
-        {
-            //await _authorizationService.AuthorizeAsync(HttpContext.User, "Claim.DoB");
-            // or
-            var result = await authorizationService.AuthorizeAsync(User, "Claim.DoB");
-            if (result.Succeeded)
-            {
-                return View("Secret");
-            }
-            return View("Index");
-        }
+        //// Example of using authorization Service logically within the action or method
+        //public async Task<IActionResult> DoStuffWithMethodIoC([FromServices] IAuthorizationService authorizationService)
+        //{
+        //    //await _authorizationService.AuthorizeAsync(HttpContext.User, "Claim.DoB");
+        //    // or
+        //    var result = await authorizationService.AuthorizeAsync(User, "Claim.DoB");
+        //    if (result.Succeeded)
+        //    {
+        //        return View("Secret");
+        //    }
+        //    return View("Index");
+        //}
     }
 }

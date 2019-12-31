@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -51,17 +52,26 @@ namespace Authentor
                 //    .RequireAuthenticatedUser()
                 //    //.RequireClaim(ClaimTypes.DateOfBirth)
                 //    .Build();
+                
                 config.AddPolicy("Claim.DoB", policyBuilder =>
                         {
                             policyBuilder.RequireCustomClaim(ClaimTypes.DateOfBirth);
-                            //policyBuilder.AddRequirements(new CustomRequirementClaim(ClaimTypes.DateOfBirth));
                         });
             });
 
             // Add Singlton if passing DB Context or other services
             services.AddScoped<IAuthorizationHandler, CustomRequirementClaimHandler>();
 
-            services.AddControllersWithViews();
+            services.AddControllersWithViews(config =>
+            {
+                //var defaultAuthBuilder = new AuthorizationPolicyBuilder();
+                //var defaultAithPolicy = defaultAuthBuilder
+                //.RequireAuthenticatedUser()
+                //.Build();
+
+                ////// example of Authorization filter
+                //config.Filters.Add(new AuthorizeFilter(defaultAithPolicy));
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
