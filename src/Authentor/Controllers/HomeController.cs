@@ -13,9 +13,11 @@ namespace Authentor.Controllers
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
+        private readonly IAuthorizationService _authorizationService;
 
-        public HomeController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager)
+        public HomeController(IAuthorizationService authorizationService, UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager)
         {
+            _authorizationService = authorizationService;
             _userManager = userManager;
             _signInManager = signInManager;
         }
@@ -75,5 +77,30 @@ namespace Authentor.Controllers
             return RedirectToAction("Index");
         }
 
+        // Example of using authorization Service logically within the action or method
+        public async Task<IActionResult> DoStuffWithContructorIoC()
+        {
+            //await _authorizationService.AuthorizeAsync(HttpContext.User, "Claim.DoB");
+            // or
+            var result = await _authorizationService.AuthorizeAsync(User, "Claim.DoB");
+            if(result.Succeeded)
+            {
+                return View("Secret");
+            }
+            return View("Index");
+        }
+        
+        // Example of using authorization Service logically within the action or method
+        public async Task<IActionResult> DoStuffWithMethodIoC([FromServices] IAuthorizationService authorizationService)
+        {
+            //await _authorizationService.AuthorizeAsync(HttpContext.User, "Claim.DoB");
+            // or
+            var result = await authorizationService.AuthorizeAsync(User, "Claim.DoB");
+            if (result.Succeeded)
+            {
+                return View("Secret");
+            }
+            return View("Index");
+        }
     }
 }

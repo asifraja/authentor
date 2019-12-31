@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using Authentor.AuthorizationRequirements;
 using Authentor.IdentityData;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -23,7 +26,9 @@ namespace Authentor
             {
                 confir.UseInMemoryDatabase("MemoryDatabase");
             });
-            services.AddIdentity<IdentityUser, IdentityRole>(config => {
+
+            services.AddIdentity<IdentityUser, IdentityRole>(config =>
+            {
                 config.Password.RequiredLength = 4;
                 config.Password.RequireDigit = false;
                 config.Password.RequireNonAlphanumeric = false;
@@ -32,10 +37,29 @@ namespace Authentor
                 .AddEntityFrameworkStores<AuthentorDbContext>()
                 .AddDefaultTokenProviders();
 
-            services.ConfigureApplicationCookie(config=> {
+            services.ConfigureApplicationCookie(config =>
+            {
                 config.Cookie.Name = "Authentor.Cookie";
                 config.LoginPath = "/Home/Login";
             });
+
+            // Following is an example of using the AuthorizationPolicyBuilder
+            services.AddAuthorization(config =>
+            {
+                //    var defaultAuthBuilder = new AuthorizationPolicyBuilder();
+                //    var defaultAithPolicy = defaultAuthBuilder
+                //    .RequireAuthenticatedUser()
+                //    //.RequireClaim(ClaimTypes.DateOfBirth)
+                //    .Build();
+                config.AddPolicy("Claim.DoB", policyBuilder =>
+                        {
+                            policyBuilder.RequireCustomClaim(ClaimTypes.DateOfBirth);
+                            //policyBuilder.AddRequirements(new CustomRequirementClaim(ClaimTypes.DateOfBirth));
+                        });
+            });
+
+            // Add Singlton if passing DB Context or other services
+            services.AddScoped<IAuthorizationHandler, CustomRequirementClaimHandler>();
 
             services.AddControllersWithViews();
         }
@@ -53,7 +77,7 @@ namespace Authentor
             app.UseAuthentication();
 
             app.UseAuthorization();
-            
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapDefaultControllerRoute();
